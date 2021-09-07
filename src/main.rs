@@ -6,6 +6,7 @@ use opencv::{
 	Result,
 	videoio,
     imgproc,
+    calib3d,
 };
 
 fn main() -> Result<()> {
@@ -44,16 +45,32 @@ fn main() -> Result<()> {
 				core::Scalar::all(-1f64),
 				default_draw_matches_flags,
 			)?;
-            //println!("fff");
 			highgui::imshow(window, &display)?;
-            //println!("fff");
-
 		}
         let mut frame1 = Mat::default();         
         // right eye
 		cam1.read(&mut frame1)?;
 		if frame1.size()?.width > 0 {
-			highgui::imshow(window1, &mut frame1)?;
+			let mut display = Mat::default();
+            let find = calib3d::find_chessboard_corners(
+                &frame1, 
+                core::Size_ { width: 11, height: 8 }, 
+                &mut display, 
+                calib3d::CALIB_CB_ADAPTIVE_THRESH+ calib3d::CALIB_CB_FAST_CHECK+calib3d::CALIB_CB_FILTER_QUADS+calib3d::CALIB_CB_NORMALIZE_IMAGE
+            )?;
+            if find {
+                println!("sss");
+            //println!("ss");
+                calib3d::draw_chessboard_corners(
+                    &mut frame1,
+                    core::Size_ { width: 11, height: 8 }, 
+                    &display,
+                    find,
+                )?;
+			    highgui::imshow(window1, &frame1)?;
+            }else {
+			    highgui::imshow(window1, &frame1)?;
+            }
 		}
 		let key = highgui::wait_key(10)?;
 		if key > 0 && key != 255 {
