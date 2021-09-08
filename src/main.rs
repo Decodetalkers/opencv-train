@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     highgui::named_window(window1, highgui::WINDOW_AUTOSIZE)?;
     let mut cam0 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
     let mut cam1 = videoio::VideoCapture::new_default(6)?; // 0 is the default camera
-    opencv::viz::Color::gray()?;
+    //opencv::viz::Color::gray()?;
     let mut orb = <dyn features2d::ORB>::default()?;
     // every 1 second loop once
     loop {
@@ -37,31 +37,91 @@ fn main() -> Result<()> {
         // right eye
         cam1.read(&mut frame1)?;
         if frame1.size()?.width > 0 {
+            let mut ventor2d = core::Vector::<core::Point2f>::new();
             let mut display = Mat::default();
             let find = calib3d::find_chessboard_corners(
                 &frame1,
                 core::Size_ {
-                    width: 11,
+                    width: 12,
                     height: 8,
                 },
+                // 将frame1找到的信息绘制到display上
                 &mut display,
                 calib3d::CALIB_CB_ADAPTIVE_THRESH
                     + calib3d::CALIB_CB_FAST_CHECK
                     + calib3d::CALIB_CB_FILTER_QUADS
                     + calib3d::CALIB_CB_NORMALIZE_IMAGE,
             )?;
+            // 找出所有角点记录到ventor2d上
+            calib3d::find_chessboard_corners(
+                &frame1,
+                core::Size_ {
+                    width: 12,
+                    height: 8,
+                },
+                // 将frame1找到的信息绘制到display上
+                &mut ventor2d,
+                calib3d::CALIB_CB_ADAPTIVE_THRESH
+                    + calib3d::CALIB_CB_FAST_CHECK
+                    + calib3d::CALIB_CB_FILTER_QUADS
+                    + calib3d::CALIB_CB_NORMALIZE_IMAGE,
+            )?;
+
+            // 找到后绘制出角点
             if find {
-                println!("sss");
+                //println!("{:?}",display);
                 //println!("ss");
                 calib3d::draw_chessboard_corners(
                     &mut frame1,
                     core::Size_ {
-                        width: 11,
+                        width: 12,
                         height: 8,
                     },
                     &display,
                     find,
                 )?;
+                highgui::imshow(window1, &frame1)?;
+                if highgui::wait_key(1000)? > 0{
+                    let mut ventor = core::Vector::<core::Point3f>::new();
+                    for i in 0..12{
+                        for j in 0..8{
+                            let temp = core::Point3f{
+                                x: i as f32,
+                                y: j as f32,
+                                z: 0f32,
+                            };
+                            ventor.push(temp);
+                        }
+                    }
+                    println!("{}",ventor.len());
+                    println!("ss{}",ventor2d.len());
+                    let mut camera_matrix = Mat::default();
+                    let mut dist_coeffs = Mat::default();
+                    let mut rvecs = Mat::default();
+                    let mut tvecs = Mat::default();
+                    println!("exct");
+                    match calib3d::calibrate_camera(
+                        &ventor, 
+                        &ventor2d,
+                        core::Size_{
+                            width: 12,
+                            height: 8,
+                        },
+                        &mut camera_matrix, 
+                        &mut dist_coeffs,
+                        &mut rvecs, 
+                        &mut tvecs,
+                        calib3d::CALIB_FIX_PRINCIPAL_POINT,
+                        core::TermCriteria { 
+                            typ: 0,
+                            max_count: 0,
+                            epsilon: 0f64,
+                        }
+                    ){
+                        Ok(_) => println!("Ok"),
+                        Err(e) => println!("{:?}",e)
+                    };
+                }
             }
             highgui::imshow(window1, &frame1)?;
         }
