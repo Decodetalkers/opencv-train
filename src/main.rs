@@ -214,6 +214,7 @@ fn main() -> Result<()> {
             core::Scalar::default(),
         )?;
         highgui::imshow(window2, &dist2)?;
+        highgui::wait_key(1000)?;
     }
     Ok(())
 }
