@@ -1,4 +1,13 @@
-use opencv::{calib3d, core, features2d, highgui, imgproc, prelude::*, videoio, Result};
+use opencv::{
+    calib3d,
+    core,
+    prelude::*,
+    features2d,
+    highgui,
+    imgproc,
+    videoio,
+    Result
+};
 
 fn main() -> Result<()> {
     let window = "video capture";
@@ -9,6 +18,8 @@ fn main() -> Result<()> {
     let mut cam1 = videoio::VideoCapture::new_default(6)?; // 0 is the default camera
     //opencv::viz::Color::gray()?;
     let mut orb = <dyn features2d::ORB>::default()?;
+    let mut vector2d = core::Vector::<core::Vector<core::Point2f>>::new();
+    let mut vector3d = core::Vector::<core::Vector<core::Point3f>>::new();
     // every 1 second loop once
     loop {
         // left eye
@@ -83,7 +94,7 @@ fn main() -> Result<()> {
                     find,
                 )?;
                 highgui::imshow(window1, &frame1)?;
-                if highgui::wait_key(1000)? > 0{
+                if highgui::wait_key(10)? > 0{
                     let mut ventor = core::Vector::<core::Point3f>::new();
                     for i in 0..12{
                         for j in 0..8{
@@ -96,35 +107,14 @@ fn main() -> Result<()> {
                         }
                     }
                     // 万万想不到，你这家伙是要数组套数组的！
-                    let mut vector2d = core::Vector::<core::Vector<core::Point2f>>::new();
+
                     vector2d.push(ventor2d);
-                    let mut vector3d = core::Vector::<core::Vector<core::Point3f>>::new();
+
                     vector3d.push(ventor);
 
                     //println!("{}",ventor.len());
                     //println!("ss{}",ventor2d.len());
-                    let mut camera_matrix = Mat::default();
-                    let mut dist_coeffs = Mat::default();
-                    let mut rvecs = Mat::default();
-                    let mut tvecs = Mat::default();
-                    calib3d::calibrate_camera(
-                        &vector3d, 
-                        &vector2d,
-                        core::Size2i{
-                            width: 12,
-                            height: 8,
-                        },
-                        &mut camera_matrix, 
-                        &mut dist_coeffs,
-                        &mut rvecs, 
-                        &mut tvecs,
-                        calib3d::CALIB_FIX_PRINCIPAL_POINT,
-                        core::TermCriteria { 
-                            typ: 10,
-                            max_count: 10,
-                            epsilon: 10f64,
-                        }
-                    )?;
+
                 }
             }
             highgui::imshow(window1, &frame1)?;
@@ -133,6 +123,97 @@ fn main() -> Result<()> {
         if key > 0 && key != 255 {
             break;
         }
+    }
+    // 释放cam0
+    cam0.release()?;
+    drop(cam0);
+
+    // 清除所有窗口
+    highgui::destroy_all_windows()?;
+    println!("out");
+
+    //获取内参所有信息
+    let mut camera_matrix = Mat::default();
+    let mut dist_coeffs = Mat::default();
+    let mut rvecs = core::Vector::<Mat>::new();
+    let mut tvecs = core::Vector::<Mat>::new();
+    let ret = calib3d::calibrate_camera(
+        &vector3d, 
+        &vector2d,
+        core::Size2i{
+            width: 12,
+            height: 8,
+        },
+        &mut camera_matrix, 
+        &mut dist_coeffs,
+        &mut rvecs, 
+        &mut tvecs,
+        calib3d::CALIB_FIX_PRINCIPAL_POINT,
+        core::TermCriteria { 
+            typ: 10,
+            max_count: 10,
+            epsilon: 10f64,
+        }
+    )?;
+    println!("{}",ret);
+    let mut roi = core::Rect2i::default();
+    let newcameramtx = calib3d::get_optimal_new_camera_matrix(
+        &camera_matrix,
+        &dist_coeffs,
+        core::Size2i{
+            width: 12,
+            height: 8,
+        },
+        0f64,
+        core::Size2i{
+            width: 12,
+            height: 8,
+        },
+        &mut roi,
+        true
+    )?;
+    let window2 = "video capture2";
+    highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
+    let mut cam2 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
+    let mut frame = Mat::default();
+    cam2.read(&mut frame)?;
+    if frame.size()?.width > 0 {
+        let array = Mat::default();
+        let size = frame.size()?;
+        let mut dst1 = Mat::default();
+        println!("ssss");
+        calib3d::fisheye_undistort_image(
+            &frame,
+            &mut dst1,
+            &dist_coeffs,
+            &array,
+            &newcameramtx,
+            size
+        )?;
+        println!("ffff");
+        let mut mapx = Mat::default();
+        let mut mapy = Mat::default();
+        calib3d::fisheye_init_undistort_rectify_map(
+            &camera_matrix,
+            &dist_coeffs,
+            &array,
+            &newcameramtx,
+            size,
+            core::CV_32SC1, 
+            &mut mapx,
+            &mut mapy
+        )?;
+        let mut dist2 = Mat::default();
+        imgproc::remap(
+            &frame,
+            &mut dist2,
+            &mapx, 
+            &mapy,
+            imgproc::INTER_AREA,
+            core::BORDER_TRANSPARENT,
+            core::Scalar::default(),
+        )?;
+        highgui::imshow(window2, &dist2)?;
     }
     Ok(())
 }
