@@ -38,24 +38,26 @@ fn main() -> Result<()> {
         cam1.read(&mut frame1)?;
         if frame1.size()?.width > 0 {
             let mut ventor2d = core::Vector::<core::Point2f>::new();
-            let mut display = Mat::default();
+            //let mut display = Mat::default();
+            //let find = calib3d::find_chessboard_corners(
+            //    &frame1,
+            //    core::Size2i {
+            //        width: 12,
+            //        height: 8,
+            //    },
+            //    // 将frame1找到的信息绘制到display上
+            //    &mut display,
+            //    calib3d::CALIB_CB_ADAPTIVE_THRESH
+            //        + calib3d::CALIB_CB_FAST_CHECK
+            //        + calib3d::CALIB_CB_FILTER_QUADS
+            //        + calib3d::CALIB_CB_NORMALIZE_IMAGE,
+            //)?;
+            // 找出所有角点记录到ventor2d上
+            //
+            // 注释掉原本的，因为需要一个二维数组而不是mat
             let find = calib3d::find_chessboard_corners(
                 &frame1,
-                core::Size_ {
-                    width: 12,
-                    height: 8,
-                },
-                // 将frame1找到的信息绘制到display上
-                &mut display,
-                calib3d::CALIB_CB_ADAPTIVE_THRESH
-                    + calib3d::CALIB_CB_FAST_CHECK
-                    + calib3d::CALIB_CB_FILTER_QUADS
-                    + calib3d::CALIB_CB_NORMALIZE_IMAGE,
-            )?;
-            // 找出所有角点记录到ventor2d上
-            calib3d::find_chessboard_corners(
-                &frame1,
-                core::Size_ {
+                core::Size2i {
                     width: 12,
                     height: 8,
                 },
@@ -73,11 +75,11 @@ fn main() -> Result<()> {
                 //println!("ss");
                 calib3d::draw_chessboard_corners(
                     &mut frame1,
-                    core::Size_ {
+                    core::Size2i {
                         width: 12,
                         height: 8,
                     },
-                    &display,
+                    &ventor2d,
                     find,
                 )?;
                 highgui::imshow(window1, &frame1)?;
@@ -93,17 +95,22 @@ fn main() -> Result<()> {
                             ventor.push(temp);
                         }
                     }
-                    println!("{}",ventor.len());
-                    println!("ss{}",ventor2d.len());
+                    // 万万想不到，你这家伙是要数组套数组的！
+                    let mut vector2d = core::Vector::<core::Vector<core::Point2f>>::new();
+                    vector2d.push(ventor2d);
+                    let mut vector3d = core::Vector::<core::Vector<core::Point3f>>::new();
+                    vector3d.push(ventor);
+
+                    //println!("{}",ventor.len());
+                    //println!("ss{}",ventor2d.len());
                     let mut camera_matrix = Mat::default();
                     let mut dist_coeffs = Mat::default();
                     let mut rvecs = Mat::default();
                     let mut tvecs = Mat::default();
-                    println!("exct");
-                    match calib3d::calibrate_camera(
-                        &ventor, 
-                        &ventor2d,
-                        core::Size_{
+                    calib3d::calibrate_camera(
+                        &vector3d, 
+                        &vector2d,
+                        core::Size2i{
                             width: 12,
                             height: 8,
                         },
@@ -113,14 +120,11 @@ fn main() -> Result<()> {
                         &mut tvecs,
                         calib3d::CALIB_FIX_PRINCIPAL_POINT,
                         core::TermCriteria { 
-                            typ: 0,
-                            max_count: 0,
-                            epsilon: 0f64,
+                            typ: 10,
+                            max_count: 10,
+                            epsilon: 10f64,
                         }
-                    ){
-                        Ok(_) => println!("Ok"),
-                        Err(e) => println!("{:?}",e)
-                    };
+                    )?;
                 }
             }
             highgui::imshow(window1, &frame1)?;
