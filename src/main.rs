@@ -128,6 +128,7 @@ fn main() -> Result<()> {
     let mut dist_coeffs = Mat::default();
     //let mut rvecs = Mat::default();
     //let mut tvecs = Mat::default();
+    // 旋转值
     let mut rvecs = core::Vector::<Mat>::new();
     let mut tvecs = core::Vector::<Mat>::new();
     let ret = calib3d::calibrate_camera(
@@ -149,9 +150,6 @@ fn main() -> Result<()> {
         }
     )?;
     println!("{}",ret);
-    for rv in rvecs {
-        println!("{:?}",rv);
-    }
     //println!("rvecs 旋转向量{:?}",rvecs);
     let mut roi = core::Rect2i::default();
     let newcameramtx = calib3d::get_optimal_new_camera_matrix(
@@ -173,46 +171,49 @@ fn main() -> Result<()> {
     let window2 = "video capture2";
     highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
     let mut cam2 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
-    let mut frame = Mat::default();
-    cam2.read(&mut frame)?;
-    if frame.size()?.width > 0 {
-        let array = Mat::default();
-        let size = frame.size()?;
-        let mut dst1 = Mat::default();
-        println!("ssss");
-        imgproc::undistort(
-            &frame,
-            &mut dst1,
-            &camera_matrix,
-            &dist_coeffs,
-            &newcameramtx,
-        )?;
-        println!("ffff");
-        let mut mapx = Mat::default();
-        let mut mapy = Mat::default();
-        imgproc::init_undistort_rectify_map(
-            &camera_matrix,
-            &dist_coeffs,
-            &array,
-            &newcameramtx,
-            size,
-            core::CV_16SC2, 
-            &mut mapx,
-            &mut mapy
-        )?;
-        println!("mmmm");
-        let mut dist2 = Mat::default();
-        imgproc::remap(
-            &frame,
-            &mut dist2,
-            &mapx, 
-            &mapy,
-            imgproc::INTER_AREA,
-            core::BORDER_TRANSPARENT,
-            core::Scalar::default(),
-        )?;
-        highgui::imshow(window2, &dist2)?;
-        highgui::wait_key(1000)?;
+    loop {    
+        let mut frame = Mat::default();
+        cam2.read(&mut frame)?;
+        if frame.size()?.width > 0 {
+            let array = Mat::default();
+            let size = frame.size()?;
+            let mut dst1 = Mat::default();
+            imgproc::undistort(
+                &frame,
+                &mut dst1,
+                &camera_matrix,
+                &dist_coeffs,
+                &newcameramtx,
+            )?;
+            let mut mapx = Mat::default();
+            let mut mapy = Mat::default();
+            imgproc::init_undistort_rectify_map(
+                &camera_matrix,
+                &dist_coeffs,
+                &array,
+                &newcameramtx,
+                size,
+                core::CV_16SC2, 
+                &mut mapx,
+                &mut mapy
+            )?;
+            let mut dist2 = Mat::default();
+            imgproc::remap(
+                &frame,
+                &mut dist2,
+                &mapx, 
+                &mapy,
+                imgproc::INTER_AREA,
+                core::BORDER_TRANSPARENT,
+                core::Scalar::default(),
+            )?;
+            highgui::imshow(window2, &dist2)?;
+            //highgui::wait_key(1000)?;
+        }
+        let key = highgui::wait_key(10)?;
+        if key > 0 && key != 255 {
+            break;
+        }
     }
     Ok(())
 }
