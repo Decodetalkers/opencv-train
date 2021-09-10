@@ -1,13 +1,4 @@
-use opencv::{
-    calib3d,
-    core,
-    prelude::*,
-    features2d,
-    highgui,
-    imgproc,
-    videoio,
-    Result
-};
+use opencv::{Result, calib3d, core, features2d, highgui, imgproc, prelude::*, videoio};
 
 fn main() -> Result<()> {
     let window = "video capture";
@@ -135,6 +126,8 @@ fn main() -> Result<()> {
     //获取内参所有信息
     let mut camera_matrix = Mat::default();
     let mut dist_coeffs = Mat::default();
+    //let mut rvecs = Mat::default();
+    //let mut tvecs = Mat::default();
     let mut rvecs = core::Vector::<Mat>::new();
     let mut tvecs = core::Vector::<Mat>::new();
     let ret = calib3d::calibrate_camera(
@@ -156,6 +149,10 @@ fn main() -> Result<()> {
         }
     )?;
     println!("{}",ret);
+    for rv in rvecs {
+        println!("{:?}",rv);
+    }
+    //println!("rvecs 旋转向量{:?}",rvecs);
     let mut roi = core::Rect2i::default();
     let newcameramtx = calib3d::get_optimal_new_camera_matrix(
         &camera_matrix,
@@ -172,6 +169,7 @@ fn main() -> Result<()> {
         &mut roi,
         true
     )?;
+
     let window2 = "video capture2";
     highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
     let mut cam2 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
@@ -182,27 +180,27 @@ fn main() -> Result<()> {
         let size = frame.size()?;
         let mut dst1 = Mat::default();
         println!("ssss");
-        calib3d::fisheye_undistort_image(
+        imgproc::undistort(
             &frame,
             &mut dst1,
+            &camera_matrix,
             &dist_coeffs,
-            &array,
             &newcameramtx,
-            size
         )?;
         println!("ffff");
         let mut mapx = Mat::default();
         let mut mapy = Mat::default();
-        calib3d::fisheye_init_undistort_rectify_map(
+        imgproc::init_undistort_rectify_map(
             &camera_matrix,
             &dist_coeffs,
             &array,
             &newcameramtx,
             size,
-            core::CV_32SC1, 
+            core::CV_16SC2, 
             &mut mapx,
             &mut mapy
         )?;
+        println!("mmmm");
         let mut dist2 = Mat::default();
         imgproc::remap(
             &frame,
