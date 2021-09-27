@@ -65,6 +65,8 @@ fn main() -> Result<()> {
     highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
     let mut cam2 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
     let mut cam3 = videoio::VideoCapture::new_default(6)?; // 0 is the default camera
+    let mut count3: i32 = 0;
+    let mut count4: i32 = 0;
     loop {
         tool::new_camera(
             &mut cam2,
@@ -72,6 +74,8 @@ fn main() -> Result<()> {
             &dist_coeffs,
             &newcameramtx,
             window2,
+            &mut count3,
+            "c"
         )?;
         tool::new_camera(
             &mut cam3,
@@ -79,6 +83,8 @@ fn main() -> Result<()> {
             &dist_coeffs2,
             &newcameramtx2,
             window3,
+            &mut count4,
+            "d"
         )?;
         let key = highgui::wait_key(10)?;
         if key > 0 && key != 255 {

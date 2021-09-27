@@ -138,10 +138,14 @@ pub fn new_camera(
     dist_coeffs: &Mat,
     newcameramtx: &Mat,
     window: &str,
+    count: &mut i32,
+    dir: &str,
 ) -> Result<()> {
+    create_store_before(dir);
     let mut frame = Mat::default();
     camera.read(&mut frame)?;
     if frame.size()?.width > 0 {
+        *count += 1;
         let array = Mat::default();
         let size = frame.size()?;
         let mut dst1 = Mat::default();
@@ -175,6 +179,12 @@ pub fn new_camera(
             core::Scalar::default(),
         )?;
         highgui::imshow(window, &dist2)?;
+        let filename = format!("{}/output-{}.png", dir, count.clone().to_string());
+        let mut params: Vector<i32> = Vector::new();
+        params.push(3);
+        params.push(4);
+        imgcodecs::imwrite(&filename, &dist2, &params)?;
+
     }
     Ok(())
 }
