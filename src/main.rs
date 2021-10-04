@@ -5,9 +5,12 @@ fn main() -> Result<()> {
     let window1 = "video capture2";
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
     highgui::named_window(window1, highgui::WINDOW_AUTOSIZE)?;
-    let mut cam0 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
-    let mut cam1 = videoio::VideoCapture::new_default(6)?; // 0 is the default camera
-
+    let mut cam0 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?; // 0 is the default camera
+    cam0.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    cam0.set(videoio::CAP_PROP_FRAME_HEIGHT,200.0)?;
+    let mut cam1 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
+    cam1.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    cam1.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
     let mut vector2d = core::Vector::<core::Vector<core::Point2f>>::new();
     let mut vector2d2 = core::Vector::<core::Vector<core::Point2f>>::new();
     let mut vector3d = core::Vector::<core::Vector<core::Point3f>>::new();
@@ -59,12 +62,17 @@ fn main() -> Result<()> {
         &mut camera_matrix2,
         &mut dist_coeffs2,
     )?;
+    println!("ssss");
     let window2 = "video capture2";
     let window3 = "video capture3";
     highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
     highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
-    let mut cam2 = videoio::VideoCapture::new_default(4)?; // 0 is the default camera
-    let mut cam3 = videoio::VideoCapture::new_default(6)?; // 0 is the default camera
+    let mut cam2 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?; 
+    cam2.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    cam2.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
+    let mut cam3 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
+    cam3.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    cam3.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
     let mut count3: i32 = 0;
     let mut count4: i32 = 0;
     loop {

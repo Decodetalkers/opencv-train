@@ -149,7 +149,7 @@ pub fn new_camera(
         let array = Mat::default();
         let size = frame.size()?;
         let mut dst1 = Mat::default();
-        imgproc::undistort(
+        calib3d::undistort(
             &frame,
             &mut dst1,
             &camera_matrix,
@@ -158,7 +158,7 @@ pub fn new_camera(
         )?;
         let mut mapx = Mat::default();
         let mut mapy = Mat::default();
-        imgproc::init_undistort_rectify_map(
+        calib3d::init_undistort_rectify_map(
             &camera_matrix,
             &dist_coeffs,
             &array,
