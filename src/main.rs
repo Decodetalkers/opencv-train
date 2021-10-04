@@ -62,7 +62,6 @@ fn main() -> Result<()> {
         &mut camera_matrix2,
         &mut dist_coeffs2,
     )?;
-    println!("ssss");
     let window2 = "video capture2";
     let window3 = "video capture3";
     highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
