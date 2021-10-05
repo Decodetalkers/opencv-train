@@ -88,13 +88,13 @@ pub fn newcameramtx(
     vector3d: &Vector<Vector<Point3f>>,
     camera_matrix: &mut Mat,
     dist_coeffs: &mut Mat,
+    rvecs: &mut Vector<Mat>,
+    tvecs: &mut Vector<Mat>,
 ) -> Result<Mat> {
     //获取内参所有信息
     //let mut rvecs = Mat::default();
     //let mut tvecs = Mat::default();
     // 旋转值
-    let mut rvecs = Vector::<Mat>::new();
-    let mut tvecs = Vector::<Mat>::new();
     let ret = calib3d::calibrate_camera(
         vector3d,
         vector2d,
@@ -104,8 +104,8 @@ pub fn newcameramtx(
         },
         camera_matrix,
         dist_coeffs,
-        &mut rvecs,
-        &mut tvecs,
+        rvecs,
+        tvecs,
         calib3d::CALIB_FIX_PRINCIPAL_POINT,
         core::TermCriteria {
             typ: 10,
@@ -184,7 +184,6 @@ pub fn new_camera(
         params.push(3);
         params.push(4);
         imgcodecs::imwrite(&filename, &dist2, &params)?;
-
     }
     Ok(())
 }

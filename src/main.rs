@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     highgui::named_window(window1, highgui::WINDOW_AUTOSIZE)?;
     let mut cam0 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?; // 0 is the default camera
     cam0.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
-    cam0.set(videoio::CAP_PROP_FRAME_HEIGHT,200.0)?;
+    cam0.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
     let mut cam1 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
     cam1.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
     cam1.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
@@ -54,19 +54,34 @@ fn main() -> Result<()> {
     let mut camera_matrix2 = Mat::default();
     let mut dist_coeffs = Mat::default();
     let mut dist_coeffs2 = Mat::default();
-    let newcameramtx =
-        tool::newcameramtx(&vector2d, &vector3d, &mut camera_matrix, &mut dist_coeffs)?;
+    let mut rvecs_left = core::Vector::<Mat>::new();
+    let mut tvecs_left = core::Vector::<Mat>::new();
+    let mut rvecs_right = core::Vector::<Mat>::new();
+    let mut tvecs_right = core::Vector::<Mat>::new();
+    let newcameramtx = tool::newcameramtx(
+        &vector2d,
+        &vector3d,
+        &mut camera_matrix,
+        &mut dist_coeffs,
+        &mut rvecs_left,
+        &mut tvecs_left,
+    )?;
     let newcameramtx2 = tool::newcameramtx(
         &vector2d2,
         &vector3d2,
         &mut camera_matrix2,
         &mut dist_coeffs2,
+        &mut rvecs_right,
+        &mut tvecs_right,
     )?;
+    let temp: Vec<Vec<f64>> = camera_matrix.to_vec_2d()?;
+    println!("{:?}", temp);
+    println!("{:?}",rvecs_left.to_vec()[0].to_vec_2d()? as Vec<Vec<f64>>);
     let window2 = "video capture2";
     let window3 = "video capture3";
     highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
     highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
-    let mut cam2 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?; 
+    let mut cam2 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?;
     cam2.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
     cam2.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
     let mut cam3 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
@@ -82,7 +97,7 @@ fn main() -> Result<()> {
             &newcameramtx,
             window2,
             &mut count3,
-            "c"
+            "c",
         )?;
         tool::new_camera(
             &mut cam3,
@@ -91,7 +106,7 @@ fn main() -> Result<()> {
             &newcameramtx2,
             window3,
             &mut count4,
-            "d"
+            "d",
         )?;
         let key = highgui::wait_key(10)?;
         if key > 0 && key != 255 {
