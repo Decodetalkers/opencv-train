@@ -3,6 +3,34 @@ use opencv::{core, highgui, prelude::*, videoio, Result};
 //use opencv::calib3d;
 
 mod tool;
+pub trait Average {
+    fn average(&self) -> Result<Vec<Vec<f64>>>;
+}
+type Rvec = core::Vector<Mat>;
+impl Average for Rvec {
+    fn average(&self) -> Result<Vec<Vec<f64>>> {
+        let temp = self.to_vec();
+        let len = temp.len();
+        let first = temp[0].to_vec_2d()? as Vec<Vec<f64>>;
+        let leny = first.len();
+        let lenx = first[0].len();
+        let mut output = vec![vec![0.0;lenx];leny];
+        for amat in temp {
+            let tepp = amat.to_vec_2d()? as Vec<Vec<f64>>;
+            for i in 0..leny {
+                for j in 0..lenx {
+                    output[i][j] += tepp[i][j];
+                }
+            }
+        }
+        for i in 0..leny {
+            for j in 0..lenx {
+                output[i][j]/=len as f64;
+            }
+        }
+        Ok(output)
+    }
+}
 fn main() -> Result<()> {
     let window = "video capture";
     let window1 = "video capture2";
@@ -138,19 +166,19 @@ fn main() -> Result<()> {
     );
     println!(
         "rvec_left {:?}",
-        rvecs_left.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
+        rvecs_left.average()?
     );
     println!(
         "tvec_left {:?}",
-        tvecs_left.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
+        tvecs_left.average()?
     );
     println!(
         "rvecs_right {:?}",
-        rvecs_right.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
+        rvecs_right.average()?
     );
     println!(
         "tvecs_right {:?}",
-        tvecs_right.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
+        tvecs_right.average()?
     );
     println!(
         "camera_matrix {:?}",
