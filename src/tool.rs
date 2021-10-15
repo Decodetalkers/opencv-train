@@ -57,27 +57,27 @@ pub fn create_vec_message(
                 find,
             )?;
             highgui::imshow(window, &frame1)?;
-            if highgui::wait_key(10)? > 0 {
-                let mut ventor = core::Vector::<core::Point3f>::new();
-                for i in 0..12 {
-                    for j in 0..8 {
-                        let temp = core::Point3f {
-                            x: i as f32,
-                            y: j as f32,
-                            z: 0f32,
-                        };
-                        ventor.push(temp);
-                    }
+            //if highgui::wait_key(10)? > 0 {
+            let mut ventor = core::Vector::<core::Point3f>::new();
+            for i in 0..12 {
+                for j in 0..8 {
+                    let temp = core::Point3f {
+                        x: i as f32,
+                        y: j as f32,
+                        z: 0f32,
+                    };
+                    ventor.push(temp);
                 }
-                // 万万想不到，你这家伙是要数组套数组的！
-
-                vector2d.push(ventor2d);
-
-                vector3d.push(ventor);
-
-                //println!("{}",ventor.len());
-                //println!("ss{}",ventor2d.len());
             }
+            // 万万想不到，你这家伙是要数组套数组的！
+            //println!("ssss");
+            vector2d.push(ventor2d);
+
+            vector3d.push(ventor);
+
+            //println!("{}",ventor.len());
+            //println!("ss{}",ventor2d.len());
+            //}
         }
         highgui::imshow(window, &frame1)?;
     }

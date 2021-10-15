@@ -130,19 +130,19 @@ fn main() -> Result<()> {
     // here export the solution
     println!(
         "rvec_left {:?}",
-        rvecs_left.to_vec()[2].to_vec_2d()? as Vec<Vec<f64>>
+        rvecs_left.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
     );
     println!(
         "tvec_left {:?}",
-        tvecs_left.to_vec()[2].to_vec_2d()? as Vec<Vec<f64>>
+        tvecs_left.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
     );
     println!(
         "rvecs_right {:?}",
-        rvecs_right.to_vec()[2].to_vec_2d()? as Vec<Vec<f64>>
+        rvecs_right.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
     );
     println!(
         "tvecs_right {:?}",
-        tvecs_right.to_vec()[2].to_vec_2d()? as Vec<Vec<f64>>
+        tvecs_right.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
     );
     println!(
         "camera_matrix {:?}",
