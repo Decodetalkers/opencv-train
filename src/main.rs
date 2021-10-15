@@ -129,6 +129,14 @@ fn main() -> Result<()> {
     highgui::destroy_all_windows()?;
     // here export the solution
     println!(
+        "dist_coeffs {:?}",
+        dist_coeffs.to_vec_2d()? as Vec<Vec<f64>>
+    );
+    println!(
+        "dist_coeffs2 {:?}",
+        dist_coeffs2.to_vec_2d()? as Vec<Vec<f64>>
+    );
+    println!(
         "rvec_left {:?}",
         rvecs_left.to_vec()[1].to_vec_2d()? as Vec<Vec<f64>>
     );
