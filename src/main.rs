@@ -14,7 +14,7 @@ impl Average for Rvec {
         let first = temp[0].to_vec_2d()? as Vec<Vec<f64>>;
         let leny = first.len();
         let lenx = first[0].len();
-        let mut output = vec![vec![0.0;lenx];leny];
+        let mut output = vec![vec![0.0; lenx]; leny];
         for amat in temp {
             let tepp = amat.to_vec_2d()? as Vec<Vec<f64>>;
             for i in 0..leny {
@@ -23,9 +23,9 @@ impl Average for Rvec {
                 }
             }
         }
-        for i in 0..leny {
-            for j in 0..lenx {
-                output[i][j]/=len as f64;
+        for a in output.iter_mut() {
+            for b in a.iter_mut() {
+                *b /= len as f64;
             }
         }
         Ok(output)
@@ -164,22 +164,10 @@ fn main() -> Result<()> {
         "dist_coeffs2 {:?}",
         dist_coeffs2.to_vec_2d()? as Vec<Vec<f64>>
     );
-    println!(
-        "rvec_left {:?}",
-        rvecs_left.average()?
-    );
-    println!(
-        "tvec_left {:?}",
-        tvecs_left.average()?
-    );
-    println!(
-        "rvecs_right {:?}",
-        rvecs_right.average()?
-    );
-    println!(
-        "tvecs_right {:?}",
-        tvecs_right.average()?
-    );
+    println!("rvec_left {:?}", rvecs_left.average()?);
+    println!("tvec_left {:?}", tvecs_left.average()?);
+    println!("rvecs_right {:?}", rvecs_right.average()?);
+    println!("tvecs_right {:?}", tvecs_right.average()?);
     println!(
         "camera_matrix {:?}",
         camera_matrix.to_vec_2d()? as Vec<Vec<f64>>
@@ -188,5 +176,15 @@ fn main() -> Result<()> {
         "camera_matrix2 {:?}",
         camera_matrix2.to_vec_2d()? as Vec<Vec<f64>>
     );
+    let om = Mat::from_slice_2d(&rvecs_right.average()?)?;
+    let t = Mat::from_slice_2d(&tvecs_right.average()?)?;
+    tool::deep(
+        &camera_matrix,
+        &dist_coeffs,
+        &camera_matrix2,
+        &dist_coeffs2,
+        &om,
+        &t,
+    )?;
     Ok(())
 }
