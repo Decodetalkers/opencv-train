@@ -1,85 +1,42 @@
-use opencv::{core, highgui, prelude::*, videoio, Result};
+use opencv::{core, highgui, prelude::*, Result};
+
 //use opencv::calib3d::prelude::StereoBM;
 //use opencv::calib3d;
 
 mod tool;
-pub trait Average {
-    fn average(&self) -> Result<Vec<Vec<f64>>>;
-}
-type Rvec = core::Vector<Mat>;
-impl Average for Rvec {
-    fn average(&self) -> Result<Vec<Vec<f64>>> {
-        let temp = self.to_vec();
-        let len = temp.len();
-        let first = temp[0].to_vec_2d()? as Vec<Vec<f64>>;
-        let leny = first.len();
-        let lenx = first[0].len();
-        let mut output = vec![vec![0.0; lenx]; leny];
-        for amat in temp {
-            let tepp = amat.to_vec_2d()? as Vec<Vec<f64>>;
-            for i in 0..leny {
-                for j in 0..lenx {
-                    output[i][j] += tepp[i][j];
-                }
-            }
-        }
-        for a in output.iter_mut() {
-            for b in a.iter_mut() {
-                *b /= len as f64;
-            }
-        }
-        Ok(output)
-    }
-}
 fn main() -> Result<()> {
     let window = "video capture";
     let window1 = "video capture2";
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
     highgui::named_window(window1, highgui::WINDOW_AUTOSIZE)?;
-    let mut cam0 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?; // 0 is the default camera
-    cam0.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
-    cam0.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
-    let mut cam1 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
-    cam1.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
-    cam1.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
-    let mut vector2d = core::Vector::<core::Vector<core::Point2f>>::new();
-    let mut vector2d2 = core::Vector::<core::Vector<core::Point2f>>::new();
-    let mut vector3d = core::Vector::<core::Vector<core::Point3f>>::new();
-    let mut vector3d2 = core::Vector::<core::Vector<core::Point3f>>::new();
+    let mut image_points1 = core::Vector::<core::Vector<core::Point2f>>::new();
+    let mut image_points2 = core::Vector::<core::Vector<core::Point2f>>::new();
     // every 1 second loop once
-    let mut count1: i32 = 0;
-    let mut count2: i32 = 0;
-    loop {
-        tool::create_vec_message(
-            &mut vector2d2,
-            &mut vector3d2,
-            &mut cam0,
-            window,
-            "a",
-            &mut count1,
-        )?;
-        tool::create_vec_message(
-            &mut vector2d,
-            &mut vector3d,
-            &mut cam1,
-            window1,
-            "b",
-            &mut count2,
-        )?;
-        let key = highgui::wait_key(10)?;
-        if key > 0 && key != 255 {
-            break;
+    let mut object_points_before = core::Vector::<core::Point3f>::new();
+    for i in 0..12 {
+        for j in 0..8 {
+            let temp = core::Point3f {
+                x: i as f32,
+                y: j as f32,
+                z: 0f32,
+            };
+            object_points_before.push(temp);
         }
     }
+    let mut object_points = core::Vector::<core::Vector<core::Point3f>>::new();
+    for _ in 0..96 {
+      object_points.push(object_points_before.clone());
+    }
+    tool::create_vec_message(&mut image_points1,  window, "a")?;
+    tool::create_vec_message(&mut image_points2, window1, "b")?;
     // 释放cam0
-    cam0.release()?;
-    drop(cam0);
-    cam1.release()?;
-    drop(cam1);
+
 
     // 清除所有窗口
     highgui::destroy_all_windows()?;
     println!("out");
+    println!("{}", image_points1.len());
+    println!("{}", image_points2.len());
 
     // camera_matrix left , when is used to picture the depth, I need use the first of it
     let mut camera_matrix = Mat::default();
@@ -90,70 +47,80 @@ fn main() -> Result<()> {
     let mut dist_coeffs = Mat::default();
     let mut dist_coeffs2 = Mat::default();
     // rotation
-    let mut rvecs_left = core::Vector::<Mat>::new();
-    // transition
-    let mut tvecs_left = core::Vector::<Mat>::new();
-    let mut rvecs_right = core::Vector::<Mat>::new();
-    let mut tvecs_right = core::Vector::<Mat>::new();
-    let newcameramtx = tool::newcameramtx(
-        &vector2d,
-        &vector3d,
+    let mut r = Mat::default();
+    let mut t = Mat::default();
+    //let mut e = core::Vector::<Mat>::new();
+    let mut e = Mat::default();
+    //let mut f = core::Vector::<Mat>::new();
+    let mut f = Mat::default();
+    //let newcameramtx = Mat::default();
+    //let newcameramtx2 = Mat::default();
+    println!("here");
+    opencv::calib3d::stereo_calibrate(
+        &object_points,
+        &image_points1,
+        &image_points2,
         &mut camera_matrix,
         &mut dist_coeffs,
-        &mut rvecs_left,
-        &mut tvecs_left,
-    )?;
-    let newcameramtx2 = tool::newcameramtx(
-        &vector2d2,
-        &vector3d2,
         &mut camera_matrix2,
         &mut dist_coeffs2,
-        &mut rvecs_right,
-        &mut tvecs_right,
+        core::Size2i {
+            width: 400,
+            height: 200,
+        },
+        &mut r,
+        &mut t,
+        &mut e,
+        &mut f,
+        0,
+        core::TermCriteria {
+            typ: 3,
+            max_count: 3,
+            epsilon: 10f64,
+        },
     )?;
-    //let temp: Vec<Vec<f64>> = camera_matrix.to_vec_2d()?;
-    //println!("{:?}", temp);
-    //println!("{:?}",rvecs_left.to_vec()[0].to_vec_2d()? as Vec<Vec<f64>>);
-    let window2 = "video capture2";
-    let window3 = "video capture3";
-    highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
-    highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
-    let mut cam2 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?;
-    cam2.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
-    cam2.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
-    let mut cam3 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
-    cam3.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
-    cam3.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
-    let mut count3: i32 = 0;
-    let mut count4: i32 = 0;
-    loop {
-        tool::new_camera(
-            &mut cam2,
-            &camera_matrix,
-            &dist_coeffs,
-            &newcameramtx,
-            window2,
-            &mut count3,
-            "c",
-        )?;
-        tool::new_camera(
-            &mut cam3,
-            &camera_matrix2,
-            &dist_coeffs2,
-            &newcameramtx2,
-            window3,
-            &mut count4,
-            "d",
-        )?;
-        let key = highgui::wait_key(10)?;
-        if key > 0 && key != 255 {
-            break;
-        }
-    }
-    cam2.release()?;
-    drop(cam2);
-    cam3.release()?;
-    drop(cam3);
+
+    println!("here");
+    //let window2 = "video capture2";
+    //let window3 = "video capture3";
+    //highgui::named_window(window2, highgui::WINDOW_AUTOSIZE)?;
+    //highgui::named_window(window3, highgui::WINDOW_AUTOSIZE)?;
+    //let mut cam2 = videoio::VideoCapture::new(4, videoio::CAP_V4L)?;
+    //cam2.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    //cam2.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
+    //let mut cam3 = videoio::VideoCapture::new(6, videoio::CAP_V4L)?; // 0 is the default camera
+    //cam3.set(videoio::CAP_PROP_FRAME_WIDTH, 400.0)?;
+    //cam3.set(videoio::CAP_PROP_FRAME_HEIGHT, 200.0)?;
+    //let mut count3: i32 = 0;
+    //let mut count4: i32 = 0;
+    //loop {
+    //    tool::new_camera(
+    //        &mut cam2,
+    //        &camera_matrix,
+    //        &dist_coeffs,
+    //        &newcameramtx,
+    //        window2,
+    //        &mut count3,
+    //        "c",
+    //    )?;
+    //    tool::new_camera(
+    //        &mut cam3,
+    //        &camera_matrix2,
+    //        &dist_coeffs2,
+    //        &newcameramtx2,
+    //        window3,
+    //        &mut count4,
+    //        "d",
+    //    )?;
+    //    let key = highgui::wait_key(10)?;
+    //    if key > 0 && key != 255 {
+    //        break;
+    //    }
+    //}
+    //cam2.release()?;
+    //drop(cam2);
+    //cam3.release()?;
+    //drop(cam3);
     highgui::destroy_all_windows()?;
     // here export the solution
     println!(
@@ -164,10 +131,8 @@ fn main() -> Result<()> {
         "dist_coeffs2 {:?}",
         dist_coeffs2.to_vec_2d()? as Vec<Vec<f64>>
     );
-    println!("rvec_left {:?}", rvecs_left.average()?);
-    println!("tvec_left {:?}", tvecs_left.average()?);
-    println!("rvecs_right {:?}", rvecs_right.average()?);
-    println!("tvecs_right {:?}", tvecs_right.average()?);
+    println!("rvecs_right {:?}", r.to_vec_2d()? as Vec<Vec<f64>>);
+    println!("tvecs_right {:?}", t.to_vec_2d()? as Vec<Vec<f64>>);
     println!(
         "camera_matrix {:?}",
         camera_matrix.to_vec_2d()? as Vec<Vec<f64>>
@@ -176,8 +141,9 @@ fn main() -> Result<()> {
         "camera_matrix2 {:?}",
         camera_matrix2.to_vec_2d()? as Vec<Vec<f64>>
     );
-    let om = Mat::from_slice_2d(&rvecs_right.average()?)?;
-    let t = Mat::from_slice_2d(&tvecs_right.average()?)?;
+
+    let om = Mat::from_slice_2d(&(r.to_vec_2d()? as Vec<Vec<f64>>))?;
+    let t = Mat::from_slice_2d(&(t.to_vec_2d()? as Vec<Vec<f64>>))?;
     tool::deep(
         &camera_matrix,
         &dist_coeffs,
