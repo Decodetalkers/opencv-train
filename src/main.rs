@@ -20,7 +20,7 @@ fn main() -> Result<()> {
         }
     }
     let mut object_points = core::Vector::<core::Vector<core::Point3f>>::new();
-    for _ in 0..48 {
+    for _ in 0..40 {
       object_points.push(object_points_before.clone());
     }
     tool::create_vec_message(&mut image_points1, "a")?;
