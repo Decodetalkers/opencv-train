@@ -11,7 +11,6 @@ use opencv::{
 //}
 pub fn create_vec_message(
     vector2d: &mut Vector<Vector<Point2f>>,
-    window: &str,
     dir: &str,
 ) -> Result<()> {
     let mut pics: core::Vector<String> = core::Vector::<String>::new();
@@ -49,7 +48,7 @@ pub fn create_vec_message(
                     &ventor2d,
                     find,
                 )?;
-                highgui::imshow(window, &frame)?;
+                //highgui::imshow(window, &frame)?;
                 //if highgui::wait_key(10)? > 0 {
                 // 万万想不到，你这家伙是要数组套数组的！
                 //println!("ssss");
@@ -58,66 +57,11 @@ pub fn create_vec_message(
                 //println!("{}",ventor.len());
                 //println!("ss{}",ventor2d.len());
                 //}
-            highgui::imshow(window, &frame)?;
+            //highgui::imshow(window, &frame)?;
         }
     }
     Ok(())
 }
-//pub fn new_camera(
-//    camera: &mut VideoCapture,
-//    camera_matrix: &Mat,
-//    dist_coeffs: &Mat,
-//    newcameramtx: &Mat,
-//    window: &str,
-//    count: &mut i32,
-//    dir: &str,
-//) -> Result<()> {
-//    create_store_before(dir);
-//    let mut frame = Mat::default();
-//    camera.read(&mut frame)?;
-//    if frame.size()?.width > 0 {
-//        *count += 1;
-//        let array = Mat::default();
-//        let size = frame.size()?;
-//        let mut dst1 = Mat::default();
-//        calib3d::undistort(
-//            &frame,
-//            &mut dst1,
-//            &camera_matrix,
-//            &dist_coeffs,
-//            &newcameramtx,
-//        )?;
-//        let mut mapx = Mat::default();
-//        let mut mapy = Mat::default();
-//        calib3d::init_undistort_rectify_map(
-//            &camera_matrix,
-//            &dist_coeffs,
-//            &array,
-//            &newcameramtx,
-//            size,
-//            core::CV_16SC2,
-//            &mut mapx,
-//            &mut mapy,
-//        )?;
-//        let mut dist2 = Mat::default();
-//        imgproc::remap(
-//            &frame,
-//            &mut dist2,
-//            &mapx,
-//            &mapy,
-//            imgproc::INTER_AREA,
-//            core::BORDER_TRANSPARENT,
-//            core::Scalar::default(),
-//        )?;
-//        highgui::imshow(window, &dist2)?;
-//        let filename = format!("{}/output-{}.png", dir, count.clone());
-//        let mut params: Vector<i32> = Vector::new();
-//        params.push(3);
-//        params.push(4);
-//        imgcodecs::imwrite(&filename, &dist2, &params)?;
-//    }
-//    Ok(())
-//}
 pub fn deep(
     camera_matrix: &Mat,
     dist_coeffs: &Mat,
