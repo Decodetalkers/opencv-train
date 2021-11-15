@@ -3,16 +3,12 @@ use opencv::{
     core::{self, Point2f, Vector},
     highgui, imgcodecs,
     prelude::*,
-    videoio,
-    Result,
+    videoio, Result,
 };
 //fn create_store_before(dir: &str) {
 //    fs::create_dir_all(dir).unwrap();
 //}
-pub fn create_vec_message(
-    vector2d: &mut Vector<Vector<Point2f>>,
-    dir: &str,
-) -> Result<()> {
+pub fn create_vec_message(vector2d: &mut Vector<Vector<Point2f>>, dir: &str) -> Result<()> {
     let mut pics: core::Vector<String> = core::Vector::<String>::new();
     core::glob(dir, &mut pics, false)?;
     for apic in pics {
@@ -32,8 +28,8 @@ pub fn create_vec_message(
                     + calib3d::CALIB_CB_FILTER_QUADS
                     + calib3d::CALIB_CB_NORMALIZE_IMAGE,
             )?;
-            if find{
-            // 找到后绘制出角点
+            if find {
+                // 找到后绘制出角点
                 let mut params: Vector<i32> = Vector::new();
                 params.push(3);
                 params.push(4);
@@ -53,10 +49,10 @@ pub fn create_vec_message(
                 // 万万想不到，你这家伙是要数组套数组的！
                 //println!("ssss");
                 vector2d.push(ventor2d);
-            } 
-                //println!("{}",ventor.len());
-                //println!("ss{}",ventor2d.len());
-                //}
+            }
+            //println!("{}",ventor.len());
+            //println!("ss{}",ventor2d.len());
+            //}
             //highgui::imshow(window, &frame)?;
         }
     }
