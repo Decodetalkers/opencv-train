@@ -1,63 +1,150 @@
 use opencv::{
     calib3d,
-    core::{self, Point2f, Vector},
-    highgui, imgcodecs,
+    core::{self, Point2f, Vector,Point3f},
+    highgui,
     prelude::*,
-    videoio, Result,
+    videoio::{self, VideoCapture},
+    Result,
 };
 //fn create_store_before(dir: &str) {
 //    fs::create_dir_all(dir).unwrap();
 //}
-pub fn create_vec_message(vector2d: &mut Vector<Vector<Point2f>>, dir: &str) -> Result<()> {
-    let mut pics: core::Vector<String> = core::Vector::<String>::new();
-    core::glob(dir, &mut pics, false)?;
-    for apic in pics {
-        let mut frame = imgcodecs::imread(&apic, 0)?;
-        if frame.size()?.width > 0 {
-            let mut ventor2d = Vector::<Point2f>::new();
-            let find = calib3d::find_chessboard_corners(
-                &frame,
+//use std::fs;
+//fn create_store_before(dir: &str) {
+//    fs::create_dir_all(dir).unwrap();
+//}
+pub fn create_vec_message(
+    vector2d: &mut Vector<Vector<Point2f>>,
+    vector2d2: &mut Vector<Vector<Point2f>>,
+    camera: &mut VideoCapture,
+    camera2: &mut VideoCapture,
+    window: &str,
+    window2: &str,
+    count: &mut i32,
+) -> Result<()> {
+    let mut frame1 = Mat::default();
+    let mut frame2 = Mat::default();
+    camera.read(&mut frame1)?;
+    camera2.read(&mut frame2)?;
+    if frame1.size()?.width > 0 && frame2.size()?.width > 0 {
+        let mut ventor2d = Vector::<Point2f>::new();
+        let mut ventor2d2 = Vector::<Point2f>::new();
+        let find1 = calib3d::find_chessboard_corners(
+            &frame1,
+            core::Size2i {
+                width: 12,
+                height: 8,
+            },
+            // 将frame1找到的信息绘制到display上
+            &mut ventor2d,
+            calib3d::CALIB_CB_ADAPTIVE_THRESH
+                + calib3d::CALIB_CB_FAST_CHECK
+                + calib3d::CALIB_CB_FILTER_QUADS
+                + calib3d::CALIB_CB_NORMALIZE_IMAGE,
+        )?;
+        let find2 = calib3d::find_chessboard_corners(
+            &frame2,
+            core::Size2i {
+                width: 12,
+                height: 8,
+            },
+            // 将frame1找到的信息绘制到display上
+            &mut ventor2d2,
+            calib3d::CALIB_CB_ADAPTIVE_THRESH
+                + calib3d::CALIB_CB_FAST_CHECK
+                + calib3d::CALIB_CB_FILTER_QUADS
+                + calib3d::CALIB_CB_NORMALIZE_IMAGE,
+        )?;
+        // 找到后绘制出角点
+        if find1 && find2 {
+            *count += 1;
+            let mut params: Vector<i32> = Vector::new();
+            params.push(3);
+            params.push(4);
+            //println!("{:?}",display);
+            //println!("ss");
+            calib3d::draw_chessboard_corners(
+                &mut frame1,
                 core::Size2i {
                     width: 12,
                     height: 8,
                 },
-                // 将frame1找到的信息绘制到display上
-                &mut ventor2d,
-                calib3d::CALIB_CB_ADAPTIVE_THRESH
-                    + calib3d::CALIB_CB_FAST_CHECK
-                    + calib3d::CALIB_CB_FILTER_QUADS
-                    + calib3d::CALIB_CB_NORMALIZE_IMAGE,
+                &ventor2d,
+                find1,
             )?;
-            if find {
-                // 找到后绘制出角点
-                let mut params: Vector<i32> = Vector::new();
-                params.push(3);
-                params.push(4);
-                //println!("{:?}",display);
-                //println!("ss");
-                calib3d::draw_chessboard_corners(
-                    &mut frame,
-                    core::Size2i {
-                        width: 12,
-                        height: 8,
-                    },
-                    &ventor2d,
-                    find,
-                )?;
-                //highgui::imshow(window, &frame)?;
-                //if highgui::wait_key(10)? > 0 {
-                // 万万想不到，你这家伙是要数组套数组的！
-                //println!("ssss");
-                vector2d.push(ventor2d);
-            }
+            calib3d::draw_chessboard_corners(
+                &mut frame2,
+                core::Size2i {
+                    width: 12,
+                    height: 8,
+                },
+                &ventor2d2,
+                find2,
+            )?;
+            highgui::imshow(window, &frame1)?;
+            highgui::imshow(window2, &frame2)?;
+            //if highgui::wait_key(10)? > 0 {
+
+            // 万万想不到，你这家伙是要数组套数组的！
+            //println!("ssss");
+            vector2d.push(ventor2d);
+            vector2d2.push(ventor2d2);
+
             //println!("{}",ventor.len());
             //println!("ss{}",ventor2d.len());
             //}
-            //highgui::imshow(window, &frame)?;
         }
+        highgui::imshow(window, &frame1)?;
+        highgui::imshow(window2, &frame2)?;
     }
     Ok(())
 }
+pub fn newcameramtx(
+    vector2d: &Vector<Vector<Point2f>>,
+    vector3d: &Vector<Vector<Point3f>>,
+    camera_matrix: &mut Mat,
+    dist_coeffs: &mut Mat,
+    rvecs: &mut Mat,
+    tvecs: &mut Mat,
+) -> Result<Mat> {
+    //获取内参所有信息
+    //let mut rvecs = Mat::default();
+    //let mut tvecs = Mat::default();
+    // 旋转值
+    let ret = calib3d::calibrate_camera(
+        vector3d,
+        vector2d,
+        core::Size2i {
+            width: 12,
+            height: 8,
+        },
+        camera_matrix,
+        dist_coeffs,
+        rvecs,
+        tvecs,
+        calib3d::CALIB_FIX_PRINCIPAL_POINT,
+        core::TermCriteria::default()?
+    )?;
+    println!("{}", ret);
+    //println!("rvecs 旋转向量{:?}",rvecs);
+    let mut roi = core::Rect2i::default();
+    calib3d::get_optimal_new_camera_matrix(
+        camera_matrix,
+        dist_coeffs,
+        core::Size2i {
+            width: 12,
+            height: 8,
+        },
+        0f64,
+        core::Size2i {
+            width: 12,
+            height: 8,
+        },
+        &mut roi,
+        true,
+    )
+}
+
 pub fn deep(
     camera_matrix: &Mat,
     dist_coeffs: &Mat,
